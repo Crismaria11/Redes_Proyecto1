@@ -21,13 +21,14 @@ class Client(slixmpp.ClientXMPP):
 
     self.add_event_handler("session_start", self.sessionStart)
     self.add_event_handler("register", self.registrar)
+    self.add_event_handler("message", self.recibirNotificaciones)
 
   async def sessionStart(self, e):
     self.send_presence()
     await self.get_roster()
 
     # Mostrar contactos
-    # referencia de la libreria sleekmpp https://github.com/jplevyak/xmppbroadcast/blob/master/xmppbroadcast.py
+    # Referencia de la libreria sleekmpp https://github.com/jplevyak/xmppbroadcast/blob/master/xmppbroadcast.py
     def mostrarContactos():
       print("\n")
       contacts = self.client_roster.groups()
@@ -51,9 +52,9 @@ class Client(slixmpp.ClientXMPP):
               print('       ', pres['status'])
       print("")
       print('*************Fin Listado******************')
-      print("Done!")
 
     # Agregar un nuevo contacto
+    # Referencia de https://slixmpp.readthedocs.io/_/downloads/en/slix-1.7.0/pdf/
     def nuevoContacto():
       nuevoContacto = input("Ingrese userid: ")
       self.send_presence_subscription(pto=nuevoContacto)
@@ -61,7 +62,7 @@ class Client(slixmpp.ClientXMPP):
       self.send_message(mto=nuevoContacto, mbody=mensaje, mtype="chat", mfrom=self.boundjid.bare)
 
     # Mostrar detalles del contacto
-    # referencia de la libreria sleekmpp https://github.com/jplevyak/xmppbroadcast/blob/master/xmppbroadcast.py
+    # Referencia de la libreria sleekmpp https://github.com/jplevyak/xmppbroadcast/blob/master/xmppbroadcast.py
     def detallesContacto():
       self.get_roster()
       usedidContact = input("Ingrese userid: ")
@@ -78,6 +79,33 @@ class Client(slixmpp.ClientXMPP):
         print('   - ', res, ' - ', show)
         print('       ',  pres['status'])
 
+    # Mandar un DM
+    # Referencia de https://slixmpp.readthedocs.io/_/downloads/en/slix-1.7.0/pdf/
+    def sendDM():
+      recipiente = input("A quien le deseas enviar un mensaje? ")
+      mensaje = input("Mensaje: ")
+      self.send_message(mto=recipiente, mbody=mensaje, mtype="chat")
+      print("Mensaje enviado!")
+
+    # Cambiar la presencia o status
+    # Referencia de https://slixmpp.readthedocs.io/_/downloads/en/slix-1.7.0/pdf/
+    def cambiarPresencia():
+      print("""
+        1. disponible (available)
+        2. no disponible (offline)
+      """)
+      opcionPresencia = int(input("Cambiar presencia a: "))
+      if opcionPresencia == 1:
+        mensaje = "disponible"
+        status = "Available"
+      elif opcionPresencia == 2:
+        mensaje = "no disponible"
+        status = "Offline"
+      else:
+        print("Escoger una opcion del menu")
+
+      self.send_presence(pshow=mensaje, pstatus=status)
+      print("Se cambio de status")
 
 
 
@@ -95,9 +123,8 @@ class Client(slixmpp.ClientXMPP):
       5.  Chat grupal
       6.  Cambiar mensaje de presencia
       7.  Enviar archivo
-      8.  Enviar notificaciones
-      9.  Eliminar la cuenta
-      10. Salir de la sesion
+      8.  Eliminar la cuenta
+      9.  Salir de la sesion
       
       
       """)
@@ -109,16 +136,15 @@ class Client(slixmpp.ClientXMPP):
       elif loginOption == 3:
         detallesContacto()
       elif loginOption == 4:
-        pass
+        mostrarContactos()
+        sendDM()
       elif loginOption == 5:
-        pass
+        print("Opcion no disponible")
       elif loginOption == 6:
-        pass
+        cambiarPresencia()
       elif loginOption == 7:
-        pass
+        print("Opcion no disponible")
       elif loginOption == 8:
-        pass
-      elif loginOption == 9:
         self.register_plugin('xep_0030') 
         self.register_plugin('xep_0004')
         self.register_plugin('xep_0077')
@@ -134,13 +160,15 @@ class Client(slixmpp.ClientXMPP):
         
         self.disconnect()
 
-      elif loginOption == 10:
+      elif loginOption == 9:
         self.disconnect()
         loginStart = False
 
       else:
         print("Por favor escoje una opcion del menu")
 
+  def recibirNotificaciones(self, message):
+    print(str(message["from"]), ":  ", message["body"])
 
   async def registrar(self, iq):
     self.send_presence()
@@ -162,6 +190,8 @@ class Client(slixmpp.ClientXMPP):
       self.disconnect()
 
 
+
+
 def registrar(userid, password):
   cliente = Client(userid, password)
   cliente.register_plugin("xep_0030")
@@ -176,6 +206,8 @@ def registrar(userid, password):
   cliente.process(forever=False)
 
   print("Registro exitoso!")
+
+
   
 def iniciarSesion(userid, password):
   cliente = Client(userid, password)
