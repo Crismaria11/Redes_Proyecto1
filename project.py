@@ -79,33 +79,41 @@ class Client(slixmpp.ClientXMPP):
         print('   - ', res, ' - ', show)
         print('       ',  pres['status'])
 
+    def avisar(emisor, state):
+      self.register_plugin("xep_0085")
+      message = self.Message()
+      message["chat_state"] = state
+      message["to"] = emisor
+
+      message.send()
+
     # Mandar un DM
     # Referencia de https://slixmpp.readthedocs.io/_/downloads/en/slix-1.7.0/pdf/
     def sendDM():
       recipiente = input("A quien le deseas enviar un mensaje? ")
       mensaje = input("Mensaje: ")
+      self.register_plugin("xep_0085")
       self.send_message(mto=recipiente, mbody=mensaje, mtype="chat")
+      # remember: states = {'active', 'composing', 'gone', 'inactive', 'paused'}
+      avisar(recipiente, 'paused')
       print("Mensaje enviado!")
 
     # Cambiar la presencia o status
     # Referencia de https://slixmpp.readthedocs.io/_/downloads/en/slix-1.7.0/pdf/
     def cambiarPresencia():
       print("""
-        1. disponible (available)
-        2. no disponible (offline)
+        Algunas opciones de estados:
+        texto / estado
+        - disponible (Available)
+        - no disponible (Offline)
       """)
-      opcionPresencia = int(input("Cambiar presencia a: "))
-      if opcionPresencia == 1:
-        mensaje = "disponible"
-        status = "Available"
-      elif opcionPresencia == 2:
-        mensaje = "no disponible"
-        status = "Offline"
-      else:
-        print("Escoger una opcion del menu")
+      
+      opcionTexto = input("Que texto desea mostrar? ")
+      opcionEstado = input("A que estado desea cambiar? ")
 
-      self.send_presence(pshow=mensaje, pstatus=status)
+      self.send_presence(pshow=opcionTexto, pstatus=opcionEstado)
       print("Se cambio de status")
+      
 
 
 
@@ -204,8 +212,6 @@ def registrar(userid, password):
 
   cliente.connect()
   cliente.process(forever=False)
-
-  print("Registro exitoso!")
 
 
   
